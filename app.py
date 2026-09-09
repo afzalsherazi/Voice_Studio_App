@@ -1,7 +1,6 @@
-import os
 import io
+import os
 import wave
-import textwrap
 from datetime import datetime
 
 import streamlit as st
@@ -22,327 +21,375 @@ st.set_page_config(
 
 
 # ============================================================
-# CSS
+# CONFIGURATION
+# ============================================================
+
+DEFAULT_MODEL = "gemini-2.5-flash-preview-tts"
+
+MAX_CHARACTERS = 12000
+
+VOICE_OPTIONS = {
+    "Kore — Clear & professional": "Kore",
+    "Puck — Friendly & energetic": "Puck",
+    "Charon — Deep & authoritative": "Charon",
+    "Fenrir — Strong & expressive": "Fenrir",
+    "Aoede — Warm & conversational": "Aoede",
+    "Leda — Smooth & balanced": "Leda",
+    "Orus — Strong & clear": "Orus",
+    "Zephyr — Natural & versatile": "Zephyr",
+}
+
+STYLE_OPTIONS = [
+    "Natural",
+    "Professional",
+    "Friendly",
+    "Energetic",
+    "Calm",
+    "Narration",
+    "News",
+    "Storytelling",
+    "Podcast",
+    "Deep & Dramatic",
+]
+
+
+# ============================================================
+# CUSTOM CSS
+# IMPORTANT:
+# We use CSS only.
+# NO custom HTML UI blocks.
 # ============================================================
 
 st.markdown(
-    textwrap.dedent(
-        """
-        <style>
+    """
+<style>
 
-        /* =========================
-           GLOBAL
-        ========================= */
+/* =========================================================
+   GLOBAL
+   ========================================================= */
 
-        .stApp {
-            background: #f5f7fb;
-            color: #111827;
-        }
+.stApp {
+    background: #07111f;
+    color: #e5edf7;
+}
 
-        .main .block-container {
-            max-width: 1450px;
-            padding-top: 2.5rem;
-            padding-bottom: 3rem;
-        }
+[data-testid="stHeader"] {
+    background: transparent;
+}
 
-        header[data-testid="stHeader"] {
-            background: transparent;
-        }
+[data-testid="stToolbar"] {
+    background: transparent;
+}
 
-        /* =========================
-           SIDEBAR
-        ========================= */
+.main .block-container {
+    max-width: 1450px;
+    padding-top: 2.2rem;
+    padding-bottom: 4rem;
+}
 
-        section[data-testid="stSidebar"] {
-            background: #ffffff;
-            border-right: 1px solid #e5e7eb;
-        }
 
-        section[data-testid="stSidebar"] > div {
-            background: #ffffff;
-        }
+/* =========================================================
+   SIDEBAR
+   ========================================================= */
 
-        .sidebar-brand {
-            text-align: center;
-            padding: 0.5rem 0 1.5rem 0;
-        }
+section[data-testid="stSidebar"] {
+    background: #091524;
+    border-right: 1px solid #1b2a3d;
+}
 
-        .sidebar-icon {
-            font-size: 2.5rem;
-            margin-bottom: 0.3rem;
-        }
+section[data-testid="stSidebar"] > div {
+    background: #091524;
+}
 
-        .sidebar-title {
-            color: #111827;
-            font-size: 1.25rem;
-            font-weight: 800;
-        }
+section[data-testid="stSidebar"] .block-container {
+    padding-top: 1.5rem;
+}
 
-        .sidebar-subtitle {
-            color: #6b7280;
-            font-size: 0.75rem;
-            margin-top: 0.25rem;
-        }
 
-        .sidebar-heading {
-            color: #9ca3af;
-            font-size: 0.7rem;
-            font-weight: 800;
-            letter-spacing: 0.08em;
-            text-transform: uppercase;
-            margin: 1rem 0 0.5rem 0;
-        }
+/* Sidebar text */
 
-        .sidebar-divider {
-            height: 1px;
-            background: #e5e7eb;
-            margin: 1rem 0;
-        }
+section[data-testid="stSidebar"] p,
+section[data-testid="stSidebar"] span,
+section[data-testid="stSidebar"] label {
+    color: #cbd5e1;
+}
 
-        section[data-testid="stSidebar"] .stButton > button {
-            width: 100%;
-            border: none;
-            background: transparent;
-            color: #374151;
-            text-align: left;
-            justify-content: flex-start;
-            border-radius: 10px;
-            min-height: 2.7rem;
-            font-size: 0.9rem;
-            font-weight: 600;
-        }
 
-        section[data-testid="stSidebar"] .stButton > button:hover {
-            background: #eff6ff;
-            color: #2563eb;
-            border: none;
-        }
+/* Sidebar buttons */
 
-        .sidebar-card {
-            background: #f8fafc;
-            border: 1px solid #e5e7eb;
-            border-radius: 14px;
-            padding: 1rem;
-            margin-top: 1rem;
-        }
+section[data-testid="stSidebar"] .stButton > button {
+    width: 100%;
+    min-height: 45px;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 10px;
+    color: #cbd5e1;
+    text-align: left;
+    font-size: 0.92rem;
+    font-weight: 600;
+}
 
-        .sidebar-card-title {
-            color: #111827;
-            font-size: 0.82rem;
-            font-weight: 750;
-            margin-bottom: 0.4rem;
-        }
+section[data-testid="stSidebar"] .stButton > button:hover {
+    background: #102238;
+    border-color: #1d3856;
+    color: #ffffff;
+}
 
-        .sidebar-card-text {
-            color: #64748b;
-            font-size: 0.72rem;
-            line-height: 1.55;
-        }
 
-        /* =========================
-           HEADER
-        ========================= */
+/* =========================================================
+   TITLES
+   ========================================================= */
 
-        .page-title {
-            color: #111827;
-            font-size: 2.35rem;
-            font-weight: 850;
-            letter-spacing: -0.045em;
-            margin-bottom: 0.4rem;
-        }
+h1,
+h2,
+h3 {
+    color: #f8fafc !important;
+}
 
-        .page-subtitle {
-            color: #64748b;
-            font-size: 1rem;
-            margin-bottom: 1.8rem;
-        }
+.page-title {
+    font-size: 2.5rem;
+    font-weight: 800;
+    color: #f8fafc;
+    letter-spacing: -1px;
+}
 
-        /* =========================
-           CARDS
-        ========================= */
+.page-subtitle {
+    color: #94a3b8;
+    font-size: 1rem;
+    margin-bottom: 1.8rem;
+}
 
-        .card {
-            background: #ffffff;
-            border: 1px solid #e5e7eb;
-            border-radius: 16px;
-            padding: 1.35rem;
-            box-shadow: 0 4px 20px rgba(15, 23, 42, 0.04);
-            margin-bottom: 1rem;
-        }
 
-        .card-title {
-            color: #111827;
-            font-size: 1.05rem;
-            font-weight: 750;
-            margin-bottom: 0.25rem;
-        }
+/* =========================================================
+   CARDS
+   ========================================================= */
 
-        .card-description {
-            color: #64748b;
-            font-size: 0.78rem;
-            margin-bottom: 1rem;
-        }
+[data-testid="stVerticalBlockBorderWrapper"] {
+    background: #0d1a2b;
+    border: 1px solid #20324a;
+    border-radius: 16px;
+}
 
-        /* =========================
-           SCRIPT AREA
-        ========================= */
 
-        .script-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 0.7rem;
-        }
+/* =========================================================
+   TEXT AREA
+   ========================================================= */
 
-        .script-title {
-            color: #111827;
-            font-size: 1rem;
-            font-weight: 750;
-        }
+textarea {
+    background-color: #0a1626 !important;
+    color: #f1f5f9 !important;
+    border: 1px solid #2b405b !important;
+    border-radius: 12px !important;
+    font-size: 1rem !important;
+    line-height: 1.7 !important;
+}
 
-        .script-hint {
-            color: #94a3b8;
-            font-size: 0.72rem;
-        }
+textarea::placeholder {
+    color: #64748b !important;
+    opacity: 1 !important;
+}
 
-        textarea {
-            background: #ffffff !important;
-            color: #111827 !important;
-            border: 1px solid #cbd5e1 !important;
-            border-radius: 12px !important;
-            font-size: 0.95rem !important;
-            line-height: 1.65 !important;
-            padding: 1rem !important;
-            box-shadow: none !important;
-        }
+textarea:focus {
+    border-color: #3b82f6 !important;
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2) !important;
+}
 
-        textarea::placeholder {
-            color: #94a3b8 !important;
-            opacity: 1 !important;
-        }
 
-        textarea:focus {
-            border-color: #2563eb !important;
-            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1) !important;
-        }
+/* =========================================================
+   SELECTBOX
+   ========================================================= */
 
-        /* =========================
-           COUNTERS
-        ========================= */
+div[data-baseweb="select"] > div {
+    background: #0b1829 !important;
+    border: 1px solid #2b405b !important;
+    border-radius: 10px !important;
+    color: #f8fafc !important;
+}
 
-        .counter-row {
-            display: flex;
-            gap: 0.6rem;
-            margin-top: 0.7rem;
-        }
+div[data-baseweb="select"] span {
+    color: #e5edf7 !important;
+}
 
-        .counter {
-            background: #f8fafc;
-            border: 1px solid #e2e8f0;
-            border-radius: 8px;
-            padding: 0.4rem 0.7rem;
-            color: #64748b;
-            font-size: 0.72rem;
-        }
+div[data-baseweb="select"] svg {
+    fill: #94a3b8 !important;
+}
 
-        .counter strong {
-            color: #334155;
-        }
 
-        /* =========================
-           SETTINGS
-        ========================= */
+/* =========================================================
+   LABELS
+   ========================================================= */
 
-        .settings-title {
-            color: #111827;
-            font-size: 1.05rem;
-            font-weight: 750;
-            padding-bottom: 0.8rem;
-            margin-bottom: 1rem;
-            border-bottom: 1px solid #e5e7eb;
-        }
+label {
+    color: #cbd5e1 !important;
+    font-weight: 600 !important;
+}
 
-        .settings-section {
-            color: #94a3b8;
-            font-size: 0.68rem;
-            font-weight: 800;
-            text-transform: uppercase;
-            letter-spacing: 0.08em;
-            margin-top: 1rem;
-            margin-bottom: 0.55rem;
-        }
 
-        label {
-            color: #374151 !important;
-            font-weight: 650 !important;
-            font-size: 0.8rem !important;
-        }
+/* =========================================================
+   SLIDERS
+   ========================================================= */
 
-        div[data-baseweb="select"] > div {
-            background: #ffffff !important;
-            border: 1px solid #cbd5e1 !important;
-            border-radius: 9px !important;
-        }
+div[data-testid="stSlider"] label {
+    color: #cbd5e1 !important;
+}
 
-        div[data-baseweb="select"] span {
-            color: #111827 !important;
-        }
+div[data-testid="stSlider"] [role="slider"] {
+    background: #3b82f6 !important;
+}
 
-        /* =========================
-           BUTTON
-        ========================= */
 
-        .generate-button .stButton > button {
-            width: 100%;
-            min-height: 3.1rem;
-            background: #2563eb !important;
-            color: #ffffff !important;
-            border: none !important;
-            border-radius: 11px !important;
-            font-size: 0.95rem !important;
-            font-weight: 750 !important;
-            box-shadow: 0 8px 20px rgba(37, 99, 235, 0.18);
-        }
+/* =========================================================
+   BUTTONS
+   ========================================================= */
 
-        .generate-button .stButton > button:hover {
-            background: #1d4ed8 !important;
-            color: #ffffff !important;
-        }
+.stButton > button {
+    border-radius: 10px;
+    min-height: 44px;
+    background: #14243a;
+    color: #e2e8f0;
+    border: 1px solid #2a405b;
+    font-weight: 650;
+}
 
-        /* =========================
-           INFO
-        ========================= */
+.stButton > button:hover {
+    background: #1a304d;
+    border-color: #3b82f6;
+    color: #ffffff;
+}
 
-        .info-box {
-            background: #eff6ff;
-            border: 1px solid #dbeafe;
-            border-radius: 10px;
-            padding: 0.8rem;
-            color: #1e40af;
-            font-size: 0.75rem;
-            line-height: 1.5;
-            margin-top: 1rem;
-        }
 
-        /* =========================
-           AUDIO
-        ========================= */
+/* Generate button */
 
-        audio {
-            width: 100%;
-            margin: 0.5rem 0;
-        }
+.generate-button .stButton > button {
+    background: #2563eb !important;
+    color: white !important;
+    border: none !important;
+    min-height: 52px;
+    font-size: 1rem;
+    font-weight: 750;
+    border-radius: 11px;
+    box-shadow: 0 8px 25px rgba(37, 99, 235, 0.25);
+}
 
-        .footer {
-            text-align: center;
-            color: #94a3b8;
-            font-size: 0.7rem;
-            margin-top: 2rem;
-        }
+.generate-button .stButton > button:hover {
+    background: #1d4ed8 !important;
+}
 
-        </style>
-        """
-    ),
+
+/* =========================================================
+   METRICS
+   ========================================================= */
+
+[data-testid="stMetric"] {
+    background: #0a1727;
+    border: 1px solid #20344d;
+    border-radius: 10px;
+    padding: 0.7rem;
+}
+
+[data-testid="stMetricLabel"] {
+    color: #94a3b8 !important;
+}
+
+[data-testid="stMetricValue"] {
+    color: #f8fafc !important;
+}
+
+
+/* =========================================================
+   INFO / SUCCESS / WARNING
+   ========================================================= */
+
+div[data-testid="stAlert"] {
+    border-radius: 10px;
+}
+
+
+/* =========================================================
+   AUDIO
+   ========================================================= */
+
+audio {
+    width: 100%;
+}
+
+
+/* =========================================================
+   DIVIDERS
+   ========================================================= */
+
+hr {
+    border-color: #1c2c40 !important;
+}
+
+
+/* =========================================================
+   SIDEBAR BRAND
+   ========================================================= */
+
+.sidebar-brand {
+    text-align: center;
+    padding: 0.5rem 0 1.5rem 0;
+}
+
+.sidebar-mic {
+    font-size: 3rem;
+    line-height: 1;
+}
+
+.sidebar-brand-title {
+    color: #f8fafc;
+    font-size: 1.25rem;
+    font-weight: 800;
+    margin-top: 0.7rem;
+}
+
+.sidebar-brand-subtitle {
+    color: #718198;
+    font-size: 0.75rem;
+    margin-top: 0.3rem;
+}
+
+
+/* =========================================================
+   SECTION TITLES
+   ========================================================= */
+
+.section-title {
+    color: #f8fafc;
+    font-size: 1.05rem;
+    font-weight: 750;
+    margin-bottom: 0.4rem;
+}
+
+.section-caption {
+    color: #64748b;
+    font-size: 0.78rem;
+    margin-bottom: 1rem;
+}
+
+.small-heading {
+    color: #64748b;
+    font-size: 0.7rem;
+    font-weight: 800;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+
+
+/* =========================================================
+   FOOTER
+   ========================================================= */
+
+.footer {
+    text-align: center;
+    color: #52657c;
+    font-size: 0.72rem;
+    padding-top: 2rem;
+}
+
+</style>
+""",
     unsafe_allow_html=True,
 )
 
@@ -354,62 +401,174 @@ st.markdown(
 if "page" not in st.session_state:
     st.session_state.page = "Voice Studio"
 
+if "script" not in st.session_state:
+    st.session_state.script = ""
+
 if "audio_data" not in st.session_state:
     st.session_state.audio_data = None
 
 if "history" not in st.session_state:
     st.session_state.history = []
 
-if "manual_api_key" not in st.session_state:
-    st.session_state.manual_api_key = ""
+if "provider" not in st.session_state:
+    st.session_state.provider = "Google Gemini TTS"
 
 
 # ============================================================
-# HELPERS
+# FUNCTIONS
 # ============================================================
-
-def html(content):
-    """
-    Safely render HTML without indentation being interpreted
-    as Markdown code.
-    """
-    st.markdown(
-        textwrap.dedent(content),
-        unsafe_allow_html=True,
-    )
-
 
 def get_api_key():
+    """
+    Read Gemini API key only from Streamlit secrets
+    or environment variables.
+
+    The key is never stored in session_state.
+    """
 
     try:
-        if "GOOGLE_API_KEY" in st.secrets:
-            return st.secrets["GOOGLE_API_KEY"]
+        key = st.secrets.get("GEMINI_API_KEY")
+
+        if key:
+            return key
+
     except Exception:
         pass
 
-    if os.getenv("GOOGLE_API_KEY"):
-        return os.getenv("GOOGLE_API_KEY")
+    key = os.environ.get("GEMINI_API_KEY")
 
-    return st.session_state.manual_api_key
+    if key:
+        return key
+
+    return None
 
 
 def pcm_to_wav(
-    pcm_data,
+    pcm_bytes,
     sample_rate=24000,
     channels=1,
     sample_width=2,
 ):
+    """
+    Convert raw PCM audio into a valid WAV file.
+    """
 
     output = io.BytesIO()
 
-    with wave.open(output, "wb") as wav:
-
-        wav.setnchannels(channels)
-        wav.setsampwidth(sample_width)
-        wav.setframerate(sample_rate)
-        wav.writeframes(pcm_data)
+    with wave.open(output, "wb") as wav_file:
+        wav_file.setnchannels(channels)
+        wav_file.setsampwidth(sample_width)
+        wav_file.setframerate(sample_rate)
+        wav_file.writeframes(pcm_bytes)
 
     return output.getvalue()
+
+
+def build_tts_prompt(
+    text,
+    style,
+    speed,
+    consistency,
+    character,
+    intensity,
+):
+    """
+    Build a natural-language Gemini TTS instruction.
+
+    Gemini does not expose ElevenLabs-style
+    stability/similarity controls, so those controls
+    are translated into prompt instructions.
+    """
+
+    speed_instruction = "normal speaking pace"
+
+    if speed < 0.9:
+        speed_instruction = "slightly slow and deliberate speaking pace"
+
+    elif speed > 1.1:
+        speed_instruction = "slightly fast and energetic speaking pace"
+
+    if consistency < 0.35:
+        consistency_instruction = (
+            "Use expressive vocal variation and natural changes "
+            "in delivery."
+        )
+
+    elif consistency > 0.7:
+        consistency_instruction = (
+            "Keep the vocal delivery consistent, controlled, "
+            "and steady."
+        )
+
+    else:
+        consistency_instruction = (
+            "Use balanced and natural vocal variation."
+        )
+
+    if character < 0.35:
+        character_instruction = (
+            "Keep the vocal character neutral and natural."
+        )
+
+    elif character > 0.7:
+        character_instruction = (
+            "Give the delivery a distinctive and expressive "
+            "vocal character."
+        )
+
+    else:
+        character_instruction = (
+            "Use a moderately expressive vocal character."
+        )
+
+    if intensity < 0.35:
+        intensity_instruction = (
+            "Keep stylistic expression subtle."
+        )
+
+    elif intensity > 0.7:
+        intensity_instruction = (
+            "Use strong expressive delivery."
+        )
+
+    else:
+        intensity_instruction = (
+            "Use noticeable but controlled emotional expression."
+        )
+
+    prompt = f"""
+Speak the following text naturally.
+
+Speaking style:
+{style}
+
+Pacing:
+{speed_instruction}
+
+Voice consistency:
+{consistency_instruction}
+
+Voice character:
+{character_instruction}
+
+Style intensity:
+{intensity_instruction}
+
+Additional instructions:
+- Use clear pronunciation.
+- Sound natural and human-like.
+- Use appropriate pauses.
+- Follow punctuation naturally.
+- Do not add words.
+- Do not explain the text.
+- Only speak the supplied script.
+
+SCRIPT:
+
+{text}
+"""
+
+    return prompt
 
 
 def generate_speech(
@@ -417,32 +576,34 @@ def generate_speech(
     model,
     voice,
     style,
+    speed,
+    consistency,
+    character,
+    intensity,
 ):
+    """
+    Generate speech through Google's official
+    Gemini Python SDK.
+    """
 
     api_key = get_api_key()
 
     if not api_key:
-        raise ValueError(
-            "Google Gemini API key is missing."
+        raise RuntimeError(
+            "GEMINI_API_KEY is not configured. "
+            "Add it under Streamlit Cloud → Settings → Secrets."
         )
 
     client = genai.Client(api_key=api_key)
 
-    prompt = f"""
-Speak the following script using a {style.lower()} speaking style.
-
-Important instructions:
-- Sound natural and human-like.
-- Use clear pronunciation.
-- Use natural pauses.
-- Do not add extra words.
-- Do not explain the script.
-- Only generate the spoken audio.
-
-SCRIPT:
-
-{text}
-"""
+    prompt = build_tts_prompt(
+        text=text,
+        style=style,
+        speed=speed,
+        consistency=consistency,
+        character=character,
+        intensity=intensity,
+    )
 
     response = client.models.generate_content(
         model=model,
@@ -461,244 +622,406 @@ SCRIPT:
 
     if not response.candidates:
         raise RuntimeError(
-            "Gemini returned no response."
+            "Gemini returned an empty response."
         )
 
-    for part in response.candidates[0].content.parts:
+    for candidate in response.candidates:
 
-        if getattr(part, "inline_data", None):
+        if not candidate.content:
+            continue
 
-            audio = part.inline_data.data
+        if not candidate.content.parts:
+            continue
 
-            if isinstance(audio, str):
+        for part in candidate.content.parts:
+
+            inline_data = getattr(
+                part,
+                "inline_data",
+                None,
+            )
+
+            if inline_data is None:
+                continue
+
+            audio_bytes = inline_data.data
+
+            if isinstance(audio_bytes, str):
                 import base64
-                audio = base64.b64decode(audio)
 
-            return pcm_to_wav(audio)
+                audio_bytes = base64.b64decode(
+                    audio_bytes
+                )
+
+            return pcm_to_wav(
+                audio_bytes
+            )
 
     raise RuntimeError(
-        "No audio was returned by Gemini."
+        "Gemini did not return audio data."
     )
 
 
 def count_words(text):
-
     if not text.strip():
         return 0
 
     return len(text.split())
 
 
-# ============================================================
-# SIDEBAR
-# ============================================================
+def render_sidebar():
 
-with st.sidebar:
+    with st.sidebar:
 
-    html(
-        """
-        <div class="sidebar-brand">
-            <div class="sidebar-icon">🎙️</div>
-            <div class="sidebar-title">AI Voice Studio</div>
-            <div class="sidebar-subtitle">
-                Natural AI speech generation
+        st.markdown(
+            """
+            <div class="sidebar-brand">
+                <div class="sidebar-mic">🎙️</div>
+                <div class="sidebar-brand-title">
+                    AI Voice Studio
+                </div>
+                <div class="sidebar-brand-subtitle">
+                    Natural AI speech generation
+                </div>
             </div>
-        </div>
+            """,
+            unsafe_allow_html=True,
+        )
 
-        <div class="sidebar-divider"></div>
+        st.divider()
 
-        <div class="sidebar-heading">
-            Workspace
-        </div>
-        """
+        st.caption("WORKSPACE")
+
+        if st.button(
+            "🎙️  Voice Studio",
+            use_container_width=True,
+        ):
+            st.session_state.page = "Voice Studio"
+            st.rerun()
+
+        if st.button(
+            "🕘  History",
+            use_container_width=True,
+        ):
+            st.session_state.page = "History"
+            st.rerun()
+
+        if st.button(
+            "⚙️  Settings",
+            use_container_width=True,
+        ):
+            st.session_state.page = "Settings"
+            st.rerun()
+
+        if st.button(
+            "ℹ️  About",
+            use_container_width=True,
+        ):
+            st.session_state.page = "About"
+            st.rerun()
+
+        st.divider()
+
+        with st.container(border=True):
+
+            st.markdown(
+                "**✨ Gemini TTS**"
+            )
+
+            st.caption(
+                "Generate natural-sounding speech "
+                "from your scripts using Google's "
+                "Gemini text-to-speech models."
+            )
+
+        st.markdown("")
+
+        st.caption(
+            "No database • Session-based history"
+        )
+
+        st.caption(
+            "Built with Streamlit + Gemini"
+        )
+
+
+def render_settings():
+
+    st.subheader("Voice Settings")
+
+    st.caption(
+        "Configure the AI voice and delivery."
     )
 
-    if st.button(
-        "🎙️  Voice Studio",
-        use_container_width=True,
-    ):
-        st.session_state.page = "Voice Studio"
-        st.rerun()
-
-    if st.button(
-        "🕘  History",
-        use_container_width=True,
-    ):
-        st.session_state.page = "History"
-        st.rerun()
-
-    if st.button(
-        "⚙️  Settings",
-        use_container_width=True,
-    ):
-        st.session_state.page = "Settings"
-        st.rerun()
-
-    if st.button(
-        "ℹ️  About",
-        use_container_width=True,
-    ):
-        st.session_state.page = "About"
-        st.rerun()
-
-    st.markdown("---")
-
-    html(
-        """
-        <div class="sidebar-card">
-            <div class="sidebar-card-title">
-                ✨ Gemini TTS
-            </div>
-
-            <div class="sidebar-card-text">
-                Generate natural-sounding speech from
-                your scripts using Google's Gemini
-                text-to-speech models.
-            </div>
-        </div>
-        """
+    provider = st.selectbox(
+        "Provider",
+        [
+            "Google Gemini TTS",
+            "Browser TTS",
+        ],
+        index=0,
+        key="provider_select",
     )
 
+    st.session_state.provider = provider
 
-# ============================================================
-# VOICE STUDIO
-# ============================================================
-
-if st.session_state.page == "Voice Studio":
-
-    html(
-        """
-        <div class="page-title">
-            AI Voice Studio
-        </div>
-
-        <div class="page-subtitle">
-            Turn your text into natural-sounding speech.
-        </div>
-        """
+    st.markdown(
+        '<div class="small-heading">AI ENGINE</div>',
+        unsafe_allow_html=True,
     )
 
-    left, right = st.columns(
+    model = st.selectbox(
+        "AI Model",
+        [
+            "Gemini 2.5 Flash TTS"
+        ],
+        key="model_select",
+    )
+
+    model_id = DEFAULT_MODEL
+
+    st.markdown(
+        '<div class="small-heading">VOICE</div>',
+        unsafe_allow_html=True,
+    )
+
+    voice_label = st.selectbox(
+        "Voice",
+        list(VOICE_OPTIONS.keys()),
+        key="voice_select",
+    )
+
+    voice_id = VOICE_OPTIONS[voice_label]
+
+    st.caption(
+        voice_label.split(" — ", 1)[-1]
+    )
+
+    st.markdown(
+        '<div class="small-heading">SPEAKING STYLE</div>',
+        unsafe_allow_html=True,
+    )
+
+    style = st.selectbox(
+        "Speaking Style",
+        STYLE_OPTIONS,
+        key="style_select",
+    )
+
+    custom_style = st.text_area(
+        "Custom Style",
+        placeholder=(
+            "Example: Speak naturally, confidently "
+            "and professionally. Use moderate pacing "
+            "and clear pronunciation."
+        ),
+        height=90,
+        key="custom_style",
+    )
+
+    if custom_style.strip():
+        final_style = custom_style.strip()
+    else:
+        final_style = style
+
+    st.markdown(
+        '<div class="small-heading">VOICE CONTROL</div>',
+        unsafe_allow_html=True,
+    )
+
+    speed = st.slider(
+        "Speed",
+        min_value=0.7,
+        max_value=1.3,
+        value=1.0,
+        step=0.05,
+        key="speed",
+    )
+
+    consistency = st.slider(
+        "Voice Consistency",
+        min_value=0.0,
+        max_value=1.0,
+        value=0.6,
+        step=0.05,
+        help=(
+            "Application-level prompt control. "
+            "It is not an ElevenLabs stability parameter."
+        ),
+        key="consistency",
+    )
+
+    character = st.slider(
+        "Voice Character",
+        min_value=0.0,
+        max_value=1.0,
+        value=0.5,
+        step=0.05,
+        help=(
+            "Controls prompt instructions for vocal character. "
+            "It does not clone or match a person's voice."
+        ),
+        key="character",
+    )
+
+    intensity = st.slider(
+        "Style Intensity",
+        min_value=0.0,
+        max_value=1.0,
+        value=0.5,
+        step=0.05,
+        key="intensity",
+    )
+
+    return {
+        "provider": provider,
+        "model": model_id,
+        "voice": voice_id,
+        "style": final_style,
+        "speed": speed,
+        "consistency": consistency,
+        "character": character,
+        "intensity": intensity,
+    }
+
+
+def render_voice_studio():
+
+    # --------------------------------------------------------
+    # PAGE HEADER
+    # --------------------------------------------------------
+
+    st.markdown(
+        '<div class="page-title">AI Voice Studio</div>',
+        unsafe_allow_html=True,
+    )
+
+    st.markdown(
+        '<div class="page-subtitle">'
+        "Turn your text into natural-sounding speech."
+        "</div>",
+        unsafe_allow_html=True,
+    )
+
+    # --------------------------------------------------------
+    # MAIN COLUMNS
+    # --------------------------------------------------------
+
+    main_column, settings_column = st.columns(
         [2.1, 1],
         gap="large",
     )
 
     # ========================================================
-    # LEFT COLUMN
+    # MAIN COLUMN
     # ========================================================
 
-    with left:
+    with main_column:
 
-        html(
-            """
-            <div class="card">
+        with st.container(border=True):
 
-                <div class="script-header">
-
-                    <div class="script-title">
-                        Your Script
-                    </div>
-
-                    <div class="script-hint">
-                        Write or paste your narration
-                    </div>
-
-                </div>
-            """
-        )
-
-        script = st.text_area(
-            "Your Script",
-            placeholder=(
-                "Type or paste your text here...\n\n"
-                "Example:\n"
-                "Welcome to AI Voice Studio. "
-                "Today we are exploring the future "
-                "of artificial intelligence."
-            ),
-            height=370,
-            label_visibility="collapsed",
-        )
-
-        words = count_words(script)
-        characters = len(script)
-
-        minutes = (
-            words / 150
-            if words > 0
-            else 0
-        )
-
-        html(
-            f"""
-            <div class="counter-row">
-
-                <div class="counter">
-                    <strong>{characters:,}</strong>
-                    characters
-                </div>
-
-                <div class="counter">
-                    <strong>{words:,}</strong>
-                    words
-                </div>
-
-                <div class="counter">
-                    <strong>{minutes:.1f}</strong>
-                    min estimated
-                </div>
-
-            </div>
-
-            </div>
-            """
-        )
-
-        # Generate button
-
-        html('<div class="generate-button">')
-
-        generate = st.button(
-            "✨  Generate Speech",
-            use_container_width=True,
-        )
-
-        html("</div>")
-
-        # Audio result
-
-        if st.session_state.audio_data:
-
-            html(
-                """
-                <div class="card">
-
-                    <div class="card-title">
-                        🎧 Audio Output
-                    </div>
-
-                    <div class="card-description">
-                        Your generated voice is ready.
-                    </div>
-                """
+            st.markdown(
+                '<div class="section-title">Your Script</div>',
+                unsafe_allow_html=True,
             )
 
-            st.audio(
-                st.session_state.audio_data,
-                format="audio/wav",
+            st.caption(
+                "Write or paste your narration below."
             )
 
-            st.download_button(
-                "⬇️ Download WAV",
-                data=st.session_state.audio_data,
-                file_name="ai_voice.wav",
-                mime="audio/wav",
+            script = st.text_area(
+                "Script",
+                value=st.session_state.script,
+                placeholder=(
+                    "Type or paste your text here..."
+                ),
+                height=360,
+                label_visibility="collapsed",
+                max_chars=MAX_CHARACTERS,
+                key="script_editor",
+            )
+
+            st.session_state.script = script
+
+            characters = len(script)
+            words = count_words(script)
+
+            col1, col2, col3 = st.columns(3)
+
+            with col1:
+                st.metric(
+                    "Characters",
+                    f"{characters:,}",
+                )
+
+            with col2:
+                st.metric(
+                    "Words",
+                    f"{words:,}",
+                )
+
+            with col3:
+
+                minutes = (
+                    words / 150
+                    if words
+                    else 0
+                )
+
+                st.metric(
+                    "Estimated",
+                    f"{minutes:.1f} min",
+                )
+
+            st.caption(
+                f"{characters:,} / "
+                f"{MAX_CHARACTERS:,} characters"
+            )
+
+        st.write("")
+
+        # ----------------------------------------------------
+        # BUTTONS
+        # ----------------------------------------------------
+
+        button1, button2 = st.columns(
+            [3, 1]
+        )
+
+        with button1:
+
+            st.markdown(
+                '<div class="generate-button">',
+                unsafe_allow_html=True,
+            )
+
+            generate = st.button(
+                "✨  Generate Speech",
                 use_container_width=True,
             )
 
-            html("</div>")
+            st.markdown(
+                "</div>",
+                unsafe_allow_html=True,
+            )
 
-        # Generate
+        with button2:
+
+            clear = st.button(
+                "🗑️ Clear",
+                use_container_width=True,
+            )
+
+        if clear:
+
+            st.session_state.script = ""
+            st.session_state.audio_data = None
+
+            st.rerun()
+
+        # ----------------------------------------------------
+        # GENERATION
+        # ----------------------------------------------------
 
         if generate:
 
@@ -708,386 +1031,451 @@ if st.session_state.page == "Voice Studio":
                     "Please enter some text first."
                 )
 
+            elif len(script) > MAX_CHARACTERS:
+
+                st.error(
+                    f"Your text is too long. "
+                    f"Maximum allowed is "
+                    f"{MAX_CHARACTERS:,} characters."
+                )
+
+            elif st.session_state.provider == "Browser TTS":
+
+                st.info(
+                    "Browser TTS fallback is selected. "
+                    "Use the browser's built-in speech option "
+                    "on a supported browser."
+                )
+
+                # Browser fallback using Streamlit
+                # JavaScript component.
+                st.components.v1.html(
+                    f"""
+                    <div style="
+                        background:#0d1a2b;
+                        padding:18px;
+                        border-radius:12px;
+                        border:1px solid #20324a;
+                        color:#e5edf7;
+                        font-family:Arial,sans-serif;
+                    ">
+
+                    <button
+                        onclick="speakText()"
+                        style="
+                            background:#2563eb;
+                            color:white;
+                            border:none;
+                            padding:12px 18px;
+                            border-radius:8px;
+                            cursor:pointer;
+                            font-weight:bold;
+                        "
+                    >
+                    🔊 Speak in Browser
+                    </button>
+
+                    <script>
+
+                    function speakText() {{
+
+                        const text = {repr(script)};
+
+                        if (!window.speechSynthesis) {{
+                            alert(
+                                "Browser speech synthesis is not supported."
+                            );
+                            return;
+                        }}
+
+                        window.speechSynthesis.cancel();
+
+                        const utterance =
+                            new SpeechSynthesisUtterance(text);
+
+                        utterance.rate = {speed};
+
+                        window.speechSynthesis.speak(
+                            utterance
+                        );
+                    }}
+
+                    </script>
+
+                    </div>
+                    """,
+                    height=80,
+                )
+
             else:
 
-                model = st.session_state.get(
-                    "selected_model",
-                    "gemini-2.5-flash-preview-tts",
-                )
+                api_key = get_api_key()
 
-                voice = st.session_state.get(
-                    "selected_voice",
-                    "Kore",
-                )
+                if not api_key:
 
-                style = st.session_state.get(
-                    "selected_style",
-                    "Natural",
-                )
+                    st.error(
+                        "GEMINI_API_KEY is missing. "
+                        "Open Streamlit Cloud → Settings → Secrets "
+                        "and add your Gemini API key."
+                    )
 
-                with st.spinner(
-                    "Generating your AI voice..."
-                ):
+                else:
+
+                    settings = {
+                        "model": st.session_state.get(
+                            "model_select",
+                            DEFAULT_MODEL,
+                        ),
+                        "voice": VOICE_OPTIONS.get(
+                            st.session_state.get(
+                                "voice_select",
+                                list(VOICE_OPTIONS.keys())[0],
+                            ),
+                            "Kore",
+                        ),
+                        "style": st.session_state.get(
+                            "custom_style"
+                        )
+                        or st.session_state.get(
+                            "style_select",
+                            "Natural",
+                        ),
+                        "speed": st.session_state.get(
+                            "speed",
+                            1.0,
+                        ),
+                        "consistency": st.session_state.get(
+                            "consistency",
+                            0.6,
+                        ),
+                        "character": st.session_state.get(
+                            "character",
+                            0.5,
+                        ),
+                        "intensity": st.session_state.get(
+                            "intensity",
+                            0.5,
+                        ),
+                    }
 
                     try:
 
-                        audio = generate_speech(
-                            script,
-                            model,
-                            voice,
-                            style,
-                        )
+                        with st.status(
+                            "Generating speech...",
+                            expanded=True,
+                        ) as status:
 
-                        st.session_state.audio_data = audio
+                            st.write(
+                                "Connecting to Gemini TTS..."
+                            )
 
-                        st.session_state.history.insert(
-                            0,
-                            {
-                                "time": datetime.now().strftime(
-                                    "%Y-%m-%d %H:%M"
+                            audio = generate_speech(
+                                text=script,
+                                model=settings["model"],
+                                voice=settings["voice"],
+                                style=settings["style"],
+                                speed=settings["speed"],
+                                consistency=settings[
+                                    "consistency"
+                                ],
+                                character=settings[
+                                    "character"
+                                ],
+                                intensity=settings[
+                                    "intensity"
+                                ],
+                            )
+
+                            st.write(
+                                "Processing audio..."
+                            )
+
+                            st.session_state.audio_data = (
+                                audio
+                            )
+
+                            # Session history
+                            st.session_state.history.insert(
+                                0,
+                                {
+                                    "date": datetime.now().strftime(
+                                        "%Y-%m-%d %H:%M"
+                                    ),
+                                    "voice": settings[
+                                        "voice"
+                                    ],
+                                    "model": settings[
+                                        "model"
+                                    ],
+                                    "text": script[:180],
+                                    "style": settings[
+                                        "style"
+                                    ],
+                                },
+                            )
+
+                            status.update(
+                                label=(
+                                    "Speech generated successfully."
                                 ),
-                                "text": script[:150],
-                                "voice": voice,
-                                "style": style,
-                                "words": words,
-                            },
-                        )
+                                state="complete",
+                            )
 
-                        st.success(
-                            "Speech generated successfully!"
-                        )
+                    except Exception as error:
 
-                        st.rerun()
+                        error_text = str(error)
 
-                    except Exception as e:
+                        if (
+                            "API key" in error_text
+                            or "401" in error_text
+                            or "403" in error_text
+                        ):
 
-                        st.error(
-                            f"Generation failed: {e}"
-                        )
+                            st.error(
+                                "Gemini authentication failed. "
+                                "Please check your GEMINI_API_KEY."
+                            )
+
+                        elif (
+                            "404" in error_text
+                            or "not found" in error_text.lower()
+                        ):
+
+                            st.error(
+                                "The selected Gemini TTS model "
+                                "may no longer be available. "
+                                "Try updating DEFAULT_MODEL in app.py."
+                            )
+
+                        elif (
+                            "quota" in error_text.lower()
+                            or "429" in error_text
+                        ):
+
+                            st.error(
+                                "Gemini API quota or rate limit "
+                                "was reached. Please try again later."
+                            )
+
+                        else:
+
+                            st.error(
+                                "Speech generation failed. "
+                                "Please check your Gemini API configuration "
+                                "and try again."
+                            )
+
+        # ----------------------------------------------------
+        # AUDIO OUTPUT
+        # ----------------------------------------------------
+
+        if st.session_state.audio_data:
+
+            st.write("")
+
+            with st.container(border=True):
+
+                st.markdown(
+                    '<div class="section-title">'
+                    "🎧 Audio Output"
+                    "</div>",
+                    unsafe_allow_html=True,
+                )
+
+                st.caption(
+                    "Your generated speech is ready."
+                )
+
+                st.audio(
+                    st.session_state.audio_data,
+                    format="audio/wav",
+                )
+
+                st.download_button(
+                    "⬇️ Download WAV",
+                    data=st.session_state.audio_data,
+                    file_name="ai_voice_studio.wav",
+                    mime="audio/wav",
+                    use_container_width=True,
+                )
 
     # ========================================================
-    # RIGHT COLUMN
+    # SETTINGS COLUMN
     # ========================================================
 
-    with right:
+    with settings_column:
 
-        html(
-            """
-            <div class="card">
+        with st.container(border=True):
 
-                <div class="settings-title">
-                    Voice Settings
-                </div>
-
-                <div class="settings-section">
-                    AI Engine
-                </div>
-            """
-        )
-
-        models = {
-            "Gemini 2.5 Flash TTS":
-                "gemini-2.5-flash-preview-tts",
-
-            "Gemini 3.1 Flash TTS":
-                "gemini-3.1-flash-tts-preview",
-        }
-
-        model_label = st.selectbox(
-            "AI Model",
-            list(models.keys()),
-        )
-
-        st.session_state.selected_model = models[
-            model_label
-        ]
-
-        html(
-            """
-            <div class="settings-section">
-                Voice
-            </div>
-            """
-        )
-
-        voices = [
-            "Kore",
-            "Puck",
-            "Charon",
-            "Fenrir",
-            "Aoede",
-            "Leda",
-            "Orus",
-            "Zephyr",
-        ]
-
-        voice = st.selectbox(
-            "Voice",
-            voices,
-        )
-
-        st.session_state.selected_voice = voice
-
-        html(
-            """
-            <div class="settings-section">
-                Speaking Style
-            </div>
-            """
-        )
-
-        styles = [
-            "Natural",
-            "Professional",
-            "Friendly",
-            "Warm",
-            "Calm",
-            "Energetic",
-            "Dramatic",
-            "News",
-            "Storytelling",
-            "Educational",
-        ]
-
-        style = st.selectbox(
-            "Speaking Style",
-            styles,
-        )
-
-        st.session_state.selected_style = style
-
-        html(
-            """
-            <div class="info-box">
-                💡 <strong>Tip:</strong>
-                Use punctuation and short paragraphs
-                to create more natural narration.
-            </div>
-
-            </div>
-            """
-        )
+            settings = render_settings()
 
 
-# ============================================================
-# HISTORY
-# ============================================================
+def render_history():
 
-elif st.session_state.page == "History":
+    st.markdown(
+        '<div class="page-title">History</div>',
+        unsafe_allow_html=True,
+    )
 
-    html(
-        """
-        <div class="page-title">
-            Generation History
-        </div>
-
-        <div class="page-subtitle">
-            Review your recent voice generations.
-        </div>
-        """
+    st.markdown(
+        '<div class="page-subtitle">'
+        "Your recent voice generations."
+        "</div>",
+        unsafe_allow_html=True,
     )
 
     if not st.session_state.history:
 
-        html(
-            """
-            <div class="card">
-                <div style="
-                    text-align:center;
-                    padding:3rem;
-                    color:#64748b;
-                ">
-                    <div style="font-size:2.5rem;">
-                        🕘
-                    </div>
+        with st.container(border=True):
 
-                    <div style="
-                        color:#111827;
-                        font-weight:750;
-                        margin-top:0.7rem;
-                    ">
-                        No generations yet
-                    </div>
+            st.info(
+                "No generations yet. "
+                "Generate your first voice from Voice Studio."
+            )
 
-                    <div style="
-                        margin-top:0.3rem;
-                        font-size:0.8rem;
-                    ">
-                        Your generated voices will appear here.
-                    </div>
-                </div>
-            </div>
-            """
-        )
+        return
 
-    else:
+    if st.button(
+        "🗑️ Clear History",
+        use_container_width=False,
+    ):
 
-        for item in st.session_state.history:
+        st.session_state.history = []
 
-            html(
-                f"""
-                <div class="card">
+        st.rerun()
 
-                    <div style="
-                        color:#2563eb;
-                        font-size:0.72rem;
-                        font-weight:700;
-                    ">
-                        {item["time"]}
-                    </div>
+    st.write("")
 
-                    <div style="
-                        color:#334155;
-                        font-size:0.85rem;
-                        margin-top:0.4rem;
-                    ">
-                        {item["text"]}
-                    </div>
+    for index, item in enumerate(
+        st.session_state.history
+    ):
 
-                    <div style="
-                        color:#94a3b8;
-                        font-size:0.7rem;
-                        margin-top:0.5rem;
-                    ">
-                        {item["words"]} words
-                        · Voice: {item["voice"]}
-                        · Style: {item["style"]}
-                    </div>
+        with st.container(border=True):
 
-                </div>
-                """
+            st.markdown(
+                f"**{item['date']}**"
+            )
+
+            st.write(
+                item["text"]
+            )
+
+            st.caption(
+                f"Voice: {item['voice']}  •  "
+                f"Model: {item['model']}  •  "
+                f"Style: {item['style']}"
             )
 
 
+def render_settings_page():
+
+    st.markdown(
+        '<div class="page-title">Settings</div>',
+        unsafe_allow_html=True,
+    )
+
+    st.markdown(
+        '<div class="page-subtitle">'
+        "Application configuration."
+        "</div>",
+        unsafe_allow_html=True,
+    )
+
+    with st.container(border=True):
+
+        st.subheader(
+            "Gemini API Configuration"
+        )
+
+        if get_api_key():
+
+            st.success(
+                "Gemini API key detected."
+            )
+
+        else:
+
+            st.warning(
+                "GEMINI_API_KEY is not configured."
+            )
+
+        st.info(
+            "For Streamlit Community Cloud, add "
+            "GEMINI_API_KEY under your app's Secrets."
+        )
+
+
+def render_about():
+
+    st.markdown(
+        '<div class="page-title">About</div>',
+        unsafe_allow_html=True,
+    )
+
+    st.markdown(
+        '<div class="page-subtitle">'
+        "AI-powered text-to-speech studio."
+        "</div>",
+        unsafe_allow_html=True,
+    )
+
+    with st.container(border=True):
+
+        st.subheader(
+            "🎙️ AI Voice Studio"
+        )
+
+        st.write(
+            "AI Voice Studio converts written scripts "
+            "into natural-sounding speech using Google "
+            "Gemini TTS."
+        )
+
+        st.write(
+            "The application is designed for "
+            "Streamlit Community Cloud and uses "
+            "session-based history without a database."
+        )
+
+        st.caption(
+            "Gemini TTS • Streamlit • Python"
+        )
+
+
 # ============================================================
-# SETTINGS
+# RENDER SIDEBAR
 # ============================================================
+
+render_sidebar()
+
+
+# ============================================================
+# PAGE ROUTING
+# ============================================================
+
+if st.session_state.page == "Voice Studio":
+
+    render_voice_studio()
+
+elif st.session_state.page == "History":
+
+    render_history()
 
 elif st.session_state.page == "Settings":
 
-    html(
-        """
-        <div class="page-title">
-            Settings
-        </div>
-
-        <div class="page-subtitle">
-            Configure your Gemini API connection.
-        </div>
-        """
-    )
-
-    col1, col2 = st.columns(
-        [1.5, 1],
-        gap="large",
-    )
-
-    with col1:
-
-        html(
-            """
-            <div class="card">
-
-                <div class="card-title">
-                    🔑 Gemini API Key
-                </div>
-
-                <div class="card-description">
-                    Enter your Gemini API key for this session.
-                </div>
-            """
-        )
-
-        key = st.text_input(
-            "Google Gemini API Key",
-            type="password",
-            placeholder="AIza...",
-        )
-
-        if key:
-            st.session_state.manual_api_key = key
-
-            st.success(
-                "API key saved for this session."
-            )
-
-        html("</div>")
-
-    with col2:
-
-        html(
-            """
-            <div class="card">
-
-                <div class="card-title">
-                    🔐 Streamlit Secrets
-                </div>
-
-                <div class="card-description">
-                    For Streamlit Cloud, the recommended
-                    approach is to store the API key in
-                    Streamlit Secrets.
-                </div>
-
-                <div class="info-box">
-                    GOOGLE_API_KEY = "your-api-key"
-                </div>
-
-            </div>
-            """
-        )
-
-
-# ============================================================
-# ABOUT
-# ============================================================
+    render_settings_page()
 
 elif st.session_state.page == "About":
 
-    html(
-        """
-        <div class="page-title">
-            About AI Voice Studio
-        </div>
-
-        <div class="page-subtitle">
-            Simple AI-powered text-to-speech generation.
-        </div>
-
-        <div class="card">
-
-            <div class="card-title">
-                🎙️ AI Voice Studio
-            </div>
-
-            <div class="card-description">
-                Convert written scripts into natural-sounding
-                AI speech using Gemini TTS.
-            </div>
-
-            <div style="
-                color:#475569;
-                font-size:0.85rem;
-                line-height:1.7;
-            ">
-                Write or paste your script, choose a Gemini
-                model and voice, select a speaking style,
-                and generate your audio.
-            </div>
-
-        </div>
-        """
-    )
+    render_about()
 
 
 # ============================================================
 # FOOTER
 # ============================================================
 
-html(
-    """
-    <div class="footer">
-        AI Voice Studio · Built with Streamlit + Gemini
-    </div>
-    """
+st.markdown("---")
+
+st.caption(
+    "AI Voice Studio • Built with Streamlit + Gemini"
 )
